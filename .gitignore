@@ -1,0 +1,49 @@
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+### Terraform template
+# Local .terraform directories
+**/.terraform/*
+**/.infracost/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Ignore variables
+*.tfvars.*
+
+# Ignore generated backend
+backend.tf.json
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Ignore override files as they are usually used to override resources locally and so
+# are not checked in
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore transient lock info files created by terraform apply
+.terraform.tfstate.lock.info
+.terraform.lock.hcl
+
+# Ignore tfplan files
+*.planfile
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# build files
+**/.build/*
+**/bin/*
+
+# temp files
+**/*.tmp

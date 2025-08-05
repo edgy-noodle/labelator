@@ -1,0 +1,49 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - namespace.labelator.io
+  resources:
+  - labels
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - namespace.labelator.io
+  resources:
+  - labels/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - namespace.labelator.io
+  resources:
+  - labels/status
+  verbs:
+  - get
+  - patch
+  - update

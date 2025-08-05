@@ -1,0 +1,15 @@
+apiVersion: namespace.labelator.io/v1alpha1
+kind: Label
+metadata:
+  labels:
+    app.kubernetes.io/name: labelator
+    app.kubernetes.io/managed-by: kustomize
+  name: label-sample
+spec:
+  cleanupOnDelete: true
+  namespaces:
+    - '*'
+  excludedNamespaces:
+    - "kube-system"
+  labels:
+    test: "test"
