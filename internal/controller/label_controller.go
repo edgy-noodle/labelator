@@ -125,23 +125,16 @@ func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, nil
 	}
 
-	namespaces, err := r.getTargetNamespaces(ctx, labelCRD.Spec.Namespaces)
+	namespaces, err := r.getTargetNamespaces(ctx, labelCRD.Spec.Namespaces, labelCRD.Spec.ExcludedNamespaces)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
 	var (
 		reconciledNamespaces = make([]string, 0, len(namespaces))
 		failedNamespaces     = make([]string, 0)
 		errors               = make([]error, 0)
 	)
 	for _, name := range namespaces {
-		if len(labelCRD.Spec.Namespaces) == 1 && labelCRD.Spec.Namespaces[0] == "*" &&
-			slices.Contains(labelCRD.Spec.ExcludedNamespaces, name) {
-			log.Info("Skipping excluded namespace", "name", name)
-			continue
-		}
-
 		ns := &corev1.Namespace{}
 		if err := r.Get(ctx, types.NamespacedName{Name: name}, ns); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -204,23 +197,30 @@ func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	return ctrl.Result{}, nil
 }
 
-func (r *LabelReconciler) getTargetNamespaces(ctx context.Context, namespaces []string) ([]string, error) {
+func (r *LabelReconciler) getTargetNamespaces(ctx context.Context, incl, excl []string) ([]string, error) {
 	log := logf.FromContext(ctx)
-
-	if !slices.Contains(namespaces, "*") {
-		return namespaces, nil
+	if !slices.Contains(incl, "*") {
+		log.Info("Collected target namespaces", "included", incl)
+		return incl, nil
 	}
 
 	log.Info("Wildcard '*' detected, targeting all namespaces")
-	namespaces = []string{}
-	nsl := &corev1.NamespaceList{}
+	var (
+		namespaces = make([]string, 0)
+		nsl        = &corev1.NamespaceList{}
+	)
 	if err := r.List(ctx, nsl); err != nil {
 		log.Error(err, "Failed to list all namespaces for wildcard selector")
 		return nil, err
 	}
+
 	for _, ns := range nsl.Items {
+		if slices.Contains(excl, ns.Name) {
+			continue
+		}
 		namespaces = append(namespaces, ns.Name)
 	}
+	log.Info("Collected target namespaces", "included", namespaces, "excluded", excl)
 	return namespaces, nil
 }
 
@@ -228,18 +228,12 @@ func (r *LabelReconciler) handleFinalizer(ctx context.Context, labelCRD *namespa
 	log := logf.FromContext(ctx).WithValues("finalizer", finalizerName)
 	log.Info("Starting cleanup")
 
-	namespaces, err := r.getTargetNamespaces(ctx, labelCRD.Spec.Namespaces)
+	namespaces, err := r.getTargetNamespaces(ctx, labelCRD.Spec.Namespaces, labelCRD.Spec.ExcludedNamespaces)
 	if err != nil {
 		return err
 	}
 
 	for _, name := range namespaces {
-		if len(labelCRD.Spec.Namespaces) == 1 && labelCRD.Spec.Namespaces[0] == "*" &&
-			slices.Contains(labelCRD.Spec.ExcludedNamespaces, name) {
-			log.Info("Skipping excluded namespace", "name", name)
-			continue
-		}
-
 		ns := &corev1.Namespace{}
 		if err = r.Get(ctx, types.NamespacedName{Name: name}, ns); err != nil {
 			if apierrors.IsNotFound(err) {
