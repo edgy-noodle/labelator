@@ -65,12 +65,12 @@ type LabelReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 	log.Info("Starting reconciliation")
 
 	labelCRD := &namespacev1alpha1.Label{}
-	if err := r.Get(ctx, req.NamespacedName, labelCRD); err != nil {
+	if err = r.Get(ctx, req.NamespacedName, labelCRD); err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Info("Label resource not found")
 			return ctrl.Result{}, nil
@@ -90,7 +90,7 @@ func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		if !controllerutil.ContainsFinalizer(labelCRD, finalizerName) {
 			log.Info("Adding finalizer for Label resource as cleanupOnDelete is true")
 			controllerutil.AddFinalizer(labelCRD, finalizerName)
-			if err := r.Update(ctx, labelCRD); err != nil {
+			if err = r.Update(ctx, labelCRD); err != nil {
 				log.Error(err, "Failed to add finalizer")
 				return ctrl.Result{}, err
 			}
@@ -100,7 +100,7 @@ func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		if controllerutil.ContainsFinalizer(labelCRD, finalizerName) {
 			log.Info("Removing finalizer for Label resource as cleanupOnDelete is false")
 			controllerutil.RemoveFinalizer(labelCRD, finalizerName)
-			if err := r.Update(ctx, labelCRD); err != nil {
+			if err = r.Update(ctx, labelCRD); err != nil {
 				log.Error(err, "Failed to remove finalizer")
 				return ctrl.Result{}, err
 			}
@@ -111,8 +111,11 @@ func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	status := labelCRD.Status.DeepCopy()
 	defer func() {
 		if !reflect.DeepEqual(&labelCRD.Status, status) {
-			if err := r.Status().Update(ctx, labelCRD); err != nil {
-				log.Error(err, "Failed to update Label status")
+			if fail := r.Status().Update(ctx, labelCRD); fail != nil {
+				log.Error(fail, "Failed to update Label status")
+				if err == nil {
+					err = fail
+				}
 			}
 		}
 	}()
@@ -136,7 +139,7 @@ func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	)
 	for _, name := range namespaces {
 		ns := &corev1.Namespace{}
-		if err := r.Get(ctx, types.NamespacedName{Name: name}, ns); err != nil {
+		if err = r.Get(ctx, types.NamespacedName{Name: name}, ns); err != nil {
 			if apierrors.IsNotFound(err) {
 				log.Error(err, "Namespace not found, will continue", "name", name)
 				r.Recorder.Eventf(labelCRD, corev1.EventTypeWarning, "UpdateFailed", "Failed to get namespace %s: %v", name, err)
@@ -162,7 +165,7 @@ func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 		if changed {
 			ns.SetLabels(nsLabels)
-			if err := r.Update(ctx, ns); err != nil {
+			if err = r.Update(ctx, ns); err != nil {
 				log.Error(err, "Failed to update Namespace with new labels", "name", name)
 				r.Recorder.Eventf(labelCRD, corev1.EventTypeWarning, "UpdateFailed", "Failed to apply labels to namespace %s: %v", name, err)
 				failedNamespaces = append(failedNamespaces, name)
