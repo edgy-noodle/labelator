@@ -50,6 +50,10 @@ var _ = Describe("Label Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
+					Spec: namespacev1alpha1.LabelSpec{
+						Namespaces: []string{"test"},
+						Labels:     map[string]string{"test": "test"},
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
