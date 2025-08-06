@@ -201,6 +201,7 @@ func (r *LabelReconciler) getTargetNamespaces(ctx context.Context, incl, excl []
 	log := logf.FromContext(ctx)
 	if !slices.Contains(incl, "*") {
 		log.Info("Collected target namespaces", "included", incl)
+		slices.Sort(incl)
 		return incl, nil
 	}
 
@@ -221,6 +222,7 @@ func (r *LabelReconciler) getTargetNamespaces(ctx context.Context, incl, excl []
 		namespaces = append(namespaces, ns.Name)
 	}
 	log.Info("Collected target namespaces", "included", namespaces, "excluded", excl)
+	slices.Sort(namespaces)
 	return namespaces, nil
 }
 
@@ -283,8 +285,7 @@ func (r *LabelReconciler) reconcileOnChange(ctx context.Context, obj client.Obje
 
 	requests := make([]reconcile.Request, 0, len(labels.Items))
 	for _, label := range labels.Items {
-		all := len(label.Spec.Namespaces) == 1 && label.Spec.Namespaces[0] == "*"
-		if all {
+		if slices.Contains(label.Spec.Namespaces, "*") {
 			requests = append(requests, reconcile.Request{
 				NamespacedName: types.NamespacedName{Name: label.GetName()},
 			})
