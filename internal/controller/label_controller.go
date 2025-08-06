@@ -200,8 +200,8 @@ func (r *LabelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 func (r *LabelReconciler) getTargetNamespaces(ctx context.Context, incl, excl []string) ([]string, error) {
 	log := logf.FromContext(ctx)
 	if !slices.Contains(incl, "*") {
-		log.Info("Collected target namespaces", "included", incl)
 		slices.Sort(incl)
+		log.Info("Collected target namespaces", "included", incl)
 		return incl, nil
 	}
 
@@ -221,8 +221,8 @@ func (r *LabelReconciler) getTargetNamespaces(ctx context.Context, incl, excl []
 		}
 		namespaces = append(namespaces, ns.Name)
 	}
-	log.Info("Collected target namespaces", "included", namespaces, "excluded", excl)
 	slices.Sort(namespaces)
+	log.Info("Collected target namespaces", "included", namespaces, "excluded", excl)
 	return namespaces, nil
 }
 

@@ -35,7 +35,7 @@ type LabelSpec struct {
 
 	// Namespaces defines the namespaces to apply the labels to, accepts '*' wildcard
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	Namespaces []string `json:"namespaces,omitempty"`
+	Namespaces []string `json:"namespaces"`
 
 	// ExcludedNamespaces defines the namespaces to ignore when using a wildcard selector
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
@@ -43,12 +43,12 @@ type LabelSpec struct {
 
 	// Labels defines the labels to apply onto the Namespaces
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	Labels map[string]string `json:"labels,omitempty"`
+	Labels map[string]string `json:"labels"`
 
 	// CleanupOnDelete decides whether the controller will use finalizers and
 	// cleanup labels from the namespaces when the Label resource is removed
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	CleanupOnDelete bool `json:"cleanupOnDelete"`
+	CleanupOnDelete bool `json:"cleanupOnDelete,omitempty"`
 }
 
 // LabelStatus defines the observed state of Label.
